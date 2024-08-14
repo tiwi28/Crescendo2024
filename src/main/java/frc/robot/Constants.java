@@ -1,3 +1,8 @@
+/*
+ * THE CONSTANTS FILE HOLDS A BUNCH OF VALUES THAT WE USE IN THE CODE.
+ */
+
+
 package frc.robot;
 
 import java.util.Arrays;
@@ -23,18 +28,22 @@ import frc.lib.util.SwerveModuleConstants;
 
 public final class Constants {
 
+  //Robot Modes
   public static enum RobotMode {
     AUTONOMOUS,
     TELEOP,
     DISABLED
   }
-
+  //Allows us to chnage values on Glass/SmartDashboard
   public static boolean enableTunableValues = true;
 
+  //Constants for the light subsystem
   public static class LightsConstants {
     public static int port = 0;
     public static int length = 12;
 
+    
+    //Lightmodes for certain points in the co
     public static enum LightsType {
       ENDGAME,
       CLIMB,
@@ -44,6 +53,7 @@ public final class Constants {
       DISABLED
     }
 
+      //Color presets for LEDs
     public static class Colors {
       public static int[] RED = new int[] { 255, 0, 0 };
       public static int[] GREEN = new int[] { 0, 255, 0 };
@@ -54,9 +64,10 @@ public final class Constants {
     }
   }
 
+  //Constants for vision
   public static final class VisionConstants {
     public static String cameraName = "orangepi";
-    // The layout of the AprilTags on the field
+    // The layout of the AprilTags on the field (measurements)
     public static final Transform3d kRobotToCam = new Transform3d(
         new Translation3d(-(Units.inchesToMeters(25.5) - Units.inchesToMeters(27 / 2)), 0.0,
             Units.inchesToMeters(8.17)),
@@ -66,21 +77,23 @@ public final class Constants {
     public static final Vector<N3> kMultiTagStdDevs = VecBuilder.fill(1, 1, 1);
   }
 
+  //Driver/Operator ports
   public static final class Operators {
     public static final int driver = 0;
     public static final int operator = 1;
   }
 
+  //Constants used for the drivetrain (Lines 86-180)
   public static final class SwerveConstants {
 
     public static enum DriveMode {
-      DriverInput,
-      Snap,
-      AutonomousSnap,
+      DriverInput, //Driver control of the robot
+      Snap, //Robot rotating to an angle, hence the word "snap"
+      AutonomousSnap, //Snapping but during autonomous
     }
 
-    public static final double[] snapPID = { 1, 0, 0 };
-    public static final double[] snapSVA = { 0.015, 0.2, 0 };
+    public static final double[] snapPID = { 1, 0, 0 }; 
+    public static final double[] snapSVA = { 0.015, 0.2, 0 }; 
 
     /* Drive Controls */
     public static final double stickDeadband = 0.1;
@@ -98,7 +111,7 @@ public final class Constants {
     public static final double driveGearRatio = (6.75 / 1.0); // 6.75:1
     public static final double angleGearRatio = 150.0 / 7.0; // 150/7:1
 
-    /* Kinematics */
+    /* Kinematics (for the DriveTrain) */
     public static final SwerveDriveKinematics swerveKinematics = new SwerveDriveKinematics(
         new Translation2d(wheelBase / 2.0, trackWidth / 2.0),
         new Translation2d(wheelBase / 2.0, -trackWidth / 2.0),
@@ -167,6 +180,7 @@ public final class Constants {
     }
   }
 
+  //
   public static final class AutoConstants {
     // public static final double kMaxSpeedMetersPerSecond = 4;
     public static final double kMaxSpeedMetersPerSecond = 2;
@@ -176,6 +190,7 @@ public final class Constants {
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI * 5;
     public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI * 4;
 
+    //PID values for the drivetrains rotational and translational (x/y)movements
     public static final PIDConstants translationPID = new PIDConstants(2, 0, 0);
     public static final PIDConstants rotationPID = new PIDConstants(1.5, 0, 0);
 
@@ -185,6 +200,7 @@ public final class Constants {
   }
 
   public static final class IntakeConstants {
+    //Intake Modes
     public static enum IntakeMode {
       IN,
       OUT,
@@ -193,28 +209,31 @@ public final class Constants {
   }
 
   public static final class ShooterConstants {
-
+    //Motor IDs for the shooter and feeder MotorControllers
     public static final int leader = 31;
     public static final int follower = 32;
     public static final int feeder = 33;
     public static final int feederTail = 34;
     // public static final int beamDIO = 9;
+
+
     public static final DigitalInput beam = new DigitalInput(9);
     public static final double[] shooterPID = { 0.0, 0.0000006, 0 };
-    public static final double[] shooterFeedforward = { 0.26, 0.002 };
-    public static final int toleranceRPM = 100;
-    public static final int shooterIDLE = 2000;
+    public static final double[] shooterFeedforward = { 0.26, 0.002 }; 
+    public static final int toleranceRPM = 100; //tolerance for the hubShooter; can be 100 rpm below or above setpoint
+    public static final int shooterIDLE = 2000; //the idle speed (RPM) in which the shooter runs by after each shot; reduces time needed to get up to speed
     public static final double maxVelocityPerSecond = 4000; // RPM/s
     public static final double maxAcceleration = 2000; // RPM/s^2 og val: 700
     // TODO: remember to change accel if shooter is too fast - just an
     // experiment¯\_(ツ)_/¯
 
-    public static final double[] tailPID = new double[] { 0, 0.000001, 0 };
-    public static final double tailFF = 0.002250;
-    public static final double tailTolerance = 30;
+    public static final double[] tailPID = new double[] { 0, 0.000001, 0 }; //PID values for the amp
+    public static final double tailFF = 0.002250; //FF for amp
+    public static final double tailTolerance = 30; //Tolerance for tail RPM; can be 30 rpm below or above setpoint
 
     public static final double onTheFlyMultiplier = 18f;
 
+    
     public static enum FeedMode {
       // IN,
       OUT,
@@ -233,22 +252,27 @@ public final class Constants {
         new double[] { 10f, 1200f });
   }
 
+
+  //Arm Constants
   public static final class ArmConstants {
+  //Motor and encoder IDs
     public static final int leaderID = 21;
     public static final int followerID = 22;
     public static final int encoderID = 0;
 
-    public static final Rotation2d offset = Rotation2d.fromDegrees(88 - 90);
-    public static final Rotation2d max = Rotation2d.fromDegrees(85);
-    public static final Rotation2d min = Rotation2d.fromDegrees(3);
-    public static final Rotation2d tolernace = Rotation2d.fromDegrees(1);
+
+    public static final Rotation2d offset = Rotation2d.fromDegrees(88 - 90); //How far away the arm is (at rest) from 0 degrees
+    public static final Rotation2d max = Rotation2d.fromDegrees(85); //Max. value for the arm's angle
+    public static final Rotation2d min = Rotation2d.fromDegrees(3); //Min. value for the arm's angle
+    public static final Rotation2d tolernace = Rotation2d.fromDegrees(1); //How much the arm's exact angle can be off by
 
     public static final Rotation2d maxVelocityPerSecond = Rotation2d.fromDegrees(500);
     public static final Rotation2d maxAcceleration = Rotation2d.fromDegrees(250);
 
-    public static double[] armSGV = new double[] { 0.01, 0.0425, 0.0 };
-    public static double[] armPID = new double[] { 2, 1, 0f };
+    public static double[] armSGV = new double[] { 0.01, 0.0425, 0.0 }; //Static, Gravity, and Velocity gains 
+    public static double[] armPID = new double[] { 2, 1, 0f }; //Arm PID values
 
+    //Arm's polynomial regression
     public static final PolynomialRegression armAngleInterpolationPolynominalRegression = new PolynomialRegression(
         Arrays.asList(
             new Point(1.43, Units.degreesToRadians(47f)),
@@ -260,6 +284,7 @@ public final class Constants {
 
   public static final class ClimberConstants {
 
+    //Climb Modes
     public static enum ClimberMode {
       HOMING,
       DEPLOY,
@@ -270,8 +295,9 @@ public final class Constants {
 
     public static final int leftMotorID = 51;
     public static final int rightMotorID = 52;
-    public static final double max = 140; // TODO: change
-    public static final double desiredMax = 125; // TODO: change
+
+    public static final double max = 140; //Max
+    public static final double desiredMax = 125; // The max we want it to reach
     public static final double min = -2; // slightly above homec
     public static final double desiredMin = 10; // slightly above homec
     public static final double homingCurrentThreshold = 10;

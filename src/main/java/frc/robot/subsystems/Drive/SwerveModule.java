@@ -76,7 +76,7 @@ public class SwerveModule {
 
     lastAngle = getState().angle.getDegrees();
   }
-
+// makes sure that the motor controllers are configured properly
   public void burnToFlash() {
     driveMotor.burnFlash();
     angleMotor.burnFlash();

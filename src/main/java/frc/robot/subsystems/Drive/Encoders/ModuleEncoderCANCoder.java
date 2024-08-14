@@ -15,11 +15,14 @@ public class ModuleEncoderCANCoder implements ModuleEncoder {
     setup();
   }
 
+
+//Sets the offset 
   @Override
   public void setOffset(Rotation2d offset) {
     this.offset = offset;
   }
 
+  //Encoder Set Up
   public void setup() {
     var config = new MagnetSensorConfigs();
     config.AbsoluteSensorRange = AbsoluteSensorRangeValue.Unsigned_0To1;
@@ -32,6 +35,7 @@ public class ModuleEncoderCANCoder implements ModuleEncoder {
 
   @Override
   public Rotation2d getAbsolutePosition() {
+    //Calculates the arm's angle
     double angle = Math.toRadians(360.0 * encoder.getAbsolutePosition().getValueAsDouble() - offset.getDegrees());
     if (angle < 0) {
       angle = Math.PI * 2 + angle;

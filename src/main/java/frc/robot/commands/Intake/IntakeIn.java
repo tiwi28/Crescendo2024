@@ -12,12 +12,12 @@ public class IntakeIn extends Command {
 
   @Override
   public void initialize() {
-    m_intake.setSpeed(0.7);
+    m_intake.setSpeed(0.7); //Runs the intake motors at 70% power
   }
 
   @Override
   public void end(boolean interrupted) {
-    m_intake.stop();
+    m_intake.stop(); //Stops the intake from running
   }
 
 }

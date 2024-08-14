@@ -289,7 +289,7 @@ public class PolynomialRegression {
   }
 
   /**
-   * Returns the optimal polynomial regression (with minimised RMSE) for the
+   * @return the optimal polynomial regression (with minimised RMSE) for the
    * supplied training data and test data. Also
    * prints the errors, poly-degrees and time elapsed in the computation. This
    * also includes the thread ids, as this is

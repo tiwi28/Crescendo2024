@@ -1,10 +1,11 @@
 package frc.robot.subsystems.Drive.Encoders;
-
+//Imports 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.DutyCycle;
 import edu.wpi.first.wpilibj.RobotController;
 
+//
 public class ModuleEncoderThrifty implements ModuleEncoder {
   private AnalogInput encoder;
   private Rotation2d offset = new Rotation2d();

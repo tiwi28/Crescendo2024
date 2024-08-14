@@ -10,7 +10,7 @@ package frc.lib.util;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
- * Class for a tunable number. Gets value from dashboard in tuning mode, returns
+ * Class for a tunable number. Gets value from dashboard in tuning mode, @return
  * default if not or
  * value not in dashboard.
  */

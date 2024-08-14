@@ -1,3 +1,5 @@
+
+//Imports
 package frc.robot.subsystems.Arm;
 
 import com.revrobotics.CANSparkMax;
@@ -18,12 +20,15 @@ import frc.robot.subsystems.Arm.Encoders.ArmEncoder;
 import frc.robot.subsystems.Arm.Encoders.ArmEncoderThroughbore;
 
 public class Arm extends SubsystemBase {
+  //Initialize motors
   private final CANSparkMax leader = new CANSparkMax(Constants.ArmConstants.leaderID, MotorType.kBrushless);
   private final CANSparkMax follower = new CANSparkMax(Constants.ArmConstants.followerID, MotorType.kBrushless);
 
+  //Initialize encoders
   private final ArmEncoder encoder = new ArmEncoderThroughbore(Constants.ArmConstants.encoderID);
   public Rotation2d encoderPosition = new Rotation2d();
 
+  //PID controller + feedforward initialization
   private final PIDController pid = new PIDController(Constants.ArmConstants.armPID[0],
       Constants.ArmConstants.armPID[1],
       Constants.ArmConstants.armPID[2]);
@@ -32,11 +37,12 @@ public class Arm extends SubsystemBase {
       Constants.ArmConstants.armSGV[1],
       Constants.ArmConstants.armSGV[2]);
 
+  //Motion profiling 
   private Rotation2d setpoint = new Rotation2d();
   private Rotation2d velocity = new Rotation2d();
   private Rotation2d goal = new Rotation2d();
 
-  // Tunable values
+  // Tunable values (Values can be changed using Glass)
   private LoggedTunableNumber armP = new LoggedTunableNumber("armP", Constants.ArmConstants.armPID[0]);
   private LoggedTunableNumber armI = new LoggedTunableNumber("armI", Constants.ArmConstants.armPID[1]);
   private LoggedTunableNumber armD = new LoggedTunableNumber("armD", Constants.ArmConstants.armPID[2]);
@@ -44,18 +50,22 @@ public class Arm extends SubsystemBase {
   private LoggedTunableNumber armG = new LoggedTunableNumber("armG", Constants.ArmConstants.armSGV[1]);
   private LoggedTunableNumber armV = new LoggedTunableNumber("armV", Constants.ArmConstants.armSGV[2]);
 
+
   public Arm() {
     setupMotors();
+    //Set offset + get encoders position 
     encoder.setOffset(Constants.ArmConstants.offset);
     encoderPosition = encoder.getAbsolutePosition();
     runSetpoint(getEncoderPosition());
   }
 
+  //Makes sure that the motor controllers are configured properly
   public void burnToFlash() {
     leader.burnFlash();
     follower.burnFlash();
   }
 
+  //Motor Set-Up
   private void setupMotors() {
     leader.restoreFactoryDefaults();
     CANSparkMaxUtil.setCANSparkMaxBusUsage(leader, Usage.kPositionOnly);
@@ -74,14 +84,19 @@ public class Arm extends SubsystemBase {
     pid.setIntegratorRange(-0.05, 0.05);
   }
 
+  //Resets the PID's i value 
   public void resetI() {
     pid.reset();
   }
 
+  //returns the encoder's position
   public Rotation2d getEncoderPosition() {
     return encoderPosition;
   }
 
+
+  //Checks to see if the PID and SGV values have changed. 
+  //Updates the value if it's been changed
   public void checkTunableValues() {
     if (!Constants.enableTunableValues)
       return;
@@ -89,11 +104,13 @@ public class Arm extends SubsystemBase {
     if (armP.hasChanged() || armI.hasChanged() || armD.hasChanged()) {
       pid.setPID(armP.get(), armI.get(), armD.get());
     }
+
     if (armS.hasChanged() || armG.hasChanged() || armV.hasChanged()) {
       ffModel = new ArmFeedforward(armS.get(), armG.get(), armV.get());
     }
   }
 
+  //Sets 
   public void setGoal(Rotation2d goal) {
     this.goal = goal;
   }

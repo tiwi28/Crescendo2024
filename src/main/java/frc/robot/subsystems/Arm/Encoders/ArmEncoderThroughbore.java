@@ -7,15 +7,18 @@ public class ArmEncoderThroughbore implements ArmEncoder {
   private DutyCycleEncoder encoder;
   private Rotation2d offset = new Rotation2d();
 
+
   public ArmEncoderThroughbore(int id) {
     encoder = new DutyCycleEncoder(id);
   }
 
+  //Sets the offset
   @Override
   public void setOffset(Rotation2d offset) {
     this.offset = offset;
   }
 
+  //Calculates and returns the encoder's absolute position
   @Override
   public Rotation2d getAbsolutePosition() {
     return Rotation2d.fromDegrees(180 - (encoder.getAbsolutePosition() * 360 - offset.getDegrees()));

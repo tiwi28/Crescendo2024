@@ -1,5 +1,6 @@
 package frc.robot.subsystems.Shooter;
 
+//Imports
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkPIDController;
@@ -19,6 +20,7 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.ShooterConstants.FeedMode;
 
 public class Feeder extends SubsystemBase {
+  
   private final CANSparkMax feeder = new CANSparkMax(Constants.ShooterConstants.feeder, MotorType.kBrushless);
   private final CANSparkMax feederTail = new CANSparkMax(Constants.ShooterConstants.feederTail, MotorType.kBrushless);
   private double feedPower = 1.0;
@@ -52,9 +54,10 @@ public class Feeder extends SubsystemBase {
     tailEncoder.setPosition(0);
   }
 
+// makes sure that the motor controllers are configured properly
   public void setupMotor() {
     feeder.restoreFactoryDefaults();
-    CANSparkMaxUtil.setCANSparkMaxBusUsage(feeder, Usage.kMinimal);
+    CANSparkMaxUtil.setCANSparkMaxBusUsage(feeder, Usage.kMinimal); //Minimizes CANBus usage
     feeder.setInverted(true);
     feeder.enableVoltageCompensation(12.0);
     feeder.setSmartCurrentLimit(30, 30);
@@ -62,7 +65,7 @@ public class Feeder extends SubsystemBase {
     feeder.setIdleMode(IdleMode.kBrake);
 
     feederTail.restoreFactoryDefaults();
-    CANSparkMaxUtil.setCANSparkMaxBusUsage(feederTail, Usage.kVelocityOnly);
+    CANSparkMaxUtil.setCANSparkMaxBusUsage(feederTail, Usage.kVelocityOnly); //Minimizes CANBus usage
     feederTail.setInverted(true);
     feederTail.enableVoltageCompensation(12.0);
     feederTail.setSmartCurrentLimit(30, 30);
@@ -70,34 +73,41 @@ public class Feeder extends SubsystemBase {
     feederTail.setIdleMode(IdleMode.kBrake);
   }
 
+  // makes sure that the motor controllers are configured properly
   public void burnToFlash() {
     feeder.burnFlash();
     feederTail.burnFlash();
   }
 
+
   public void checkTunableValues() {
     if (!Constants.enableTunableValues)
       return;
+    
+  //Updates PID Values 
     if (tailP.hasChanged() || tailI.hasChanged() || tailD.hasChanged()) {
       feederTailPID.setP(tailP.get());
       feederTailPID.setI(tailI.get());
       feederTailPID.setD(tailD.get());
     }
-
+    //Updates ffModel to the tailFF value logged
     if (tailFF.hasChanged()) {
       ffModel = new SimpleMotorFeedforward(0, tailFF.get());
     }
 
   }
 
+  //Sets feedMode
   public void setFeedMode(FeedMode mode) {
     feedMode = mode;
   }
 
+  // Resets the feederPID's "I" value
   public void resetI() {
     feederTailPID.setIAccum(0);
   }
 
+  //Checks to see if the tailMotor is reaching the velocity we want it to get to.
   public boolean isTailAtSetpoint() {
     return Math.abs(tailEncoder.getVelocity() - tailSetpoint) < Constants.ShooterConstants.tailTolerance;
   }
@@ -105,8 +115,10 @@ public class Feeder extends SubsystemBase {
   @Override
   public void periodic() {
     checkTunableValues();
-    SmartDashboard.putBoolean("Beamy", beamy.get());
+    SmartDashboard.putBoolean("Beamy", beamy.get()); //Creates a SmartDashboard value that shopws if the beambreak detects anything
     switch (feedMode) {
+      //Intaking from the HumanPlayer Station; runs the intake until a note is detected
+      //(The Cases made below are the "feedModes" referenced throughout the feeder commands)
       case HP:
         if (!beamy.get()) {
           feeder.set(0);
@@ -117,6 +129,8 @@ public class Feeder extends SubsystemBase {
           feeder.set(feedPower);
         }
         break;
+
+      //Runs feeder when an amp shot is triggered
       case INFEED:
         if (!beamy.get()) {
           feeder.set(0);
@@ -127,6 +141,8 @@ public class Feeder extends SubsystemBase {
           feeder.set(feedPower);
         }
         break;
+
+      //Runs feeder motors in the case of a shot
       case SHOOTFEED:
         if (beamy.get()) {
           feeder.set(0);
@@ -135,12 +151,16 @@ public class Feeder extends SubsystemBase {
           feeder.set(feedPower);
         }
         break;
+
+      //Takes the note from the shooter and outtakes it
       case OUT:
         tailSetpoint = tailSPEED.get();
         if (isTailAtSetpoint()) {
           feeder.set(-feedPower);
         }
         break;
+
+      //Ensures feeder motors are not running
       case OFF:
         feeder.set(0);
         tailSetpoint = 0;
@@ -149,10 +169,13 @@ public class Feeder extends SubsystemBase {
       default:
         break;
     }
+    
 
-    double ffOutput = ffModel.calculate(tailSetpoint);
+    //Calculates the FeedForward output
+    double ffOutput = ffModel.calculate(tailSetpoint); //Calculates the feedForward
     feederTailPID.setReference(tailSetpoint, ControlType.kVelocity, 0, ffOutput);
 
+    //Adds desired RPM & the motor's current RPM values to Glass/SmartDashboard
     SmartDashboard.putNumber("Tail Actual RPM", tailEncoder.getVelocity());
     SmartDashboard.putNumber("Tail Desired RPM", tailSetpoint);
 
