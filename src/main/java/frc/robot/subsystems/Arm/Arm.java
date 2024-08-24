@@ -53,7 +53,7 @@ public class Arm extends SubsystemBase {
 
   public Arm() {
     setupMotors();
-    //Set offset + get encoders position 
+    //Set offset + get encoders position
     encoder.setOffset(Constants.ArmConstants.offset);
     encoderPosition = encoder.getAbsolutePosition();
     runSetpoint(getEncoderPosition());

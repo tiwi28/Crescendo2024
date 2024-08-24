@@ -1,7 +1,7 @@
 package frc.robot.subsystems.Intake;
 
 
-//Package imports
+//imports
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkLowLevel.MotorType;

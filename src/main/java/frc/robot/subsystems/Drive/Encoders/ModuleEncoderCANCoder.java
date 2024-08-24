@@ -34,8 +34,8 @@ public class ModuleEncoderCANCoder implements ModuleEncoder {
   }
 
   @Override
+  //Returns the absolute position of the drivetrain wheels
   public Rotation2d getAbsolutePosition() {
-    //Calculates the arm's angle
     double angle = Math.toRadians(360.0 * encoder.getAbsolutePosition().getValueAsDouble() - offset.getDegrees());
     if (angle < 0) {
       angle = Math.PI * 2 + angle;

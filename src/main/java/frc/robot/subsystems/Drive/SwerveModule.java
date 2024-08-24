@@ -100,6 +100,7 @@ public class SwerveModule {
     integratedAngleEncoder.setPosition(absolutePosition);
   }
 
+  //Configures Angle motor
   private void configAngleMotor() {
     angleMotor.restoreFactoryDefaults();
     CANSparkMaxUtil.setCANSparkMaxBusUsage(angleMotor, Usage.kPositionOnly);
@@ -115,6 +116,7 @@ public class SwerveModule {
     this.resetToAbsolute();
   }
 
+  //Configure Drive Motor
   private void configDriveMotor() {
     driveMotor.restoreFactoryDefaults();
     CANSparkMaxUtil.setCANSparkMaxBusUsage(driveMotor, Usage.kAll);
@@ -146,6 +148,7 @@ public class SwerveModule {
     // feedforward.calculate(desiredState.speedMetersPerSecond));
   }
 
+  //Sets module angle
   private void setAngle(SwerveModuleState desiredState) {
     // Prevent rotating module if speed is less then 1%. Prevents jittering.
     double angle = (Math.abs(desiredState.speedMetersPerSecond) <= (Constants.SwerveConstants.maxSpeed * 0.01))
@@ -157,6 +160,7 @@ public class SwerveModule {
     lastAngle = angle;
   }
 
+  //Logs the values of the desired/actual speeds and agles of each swerve module
   public void logValues() {
     SmartDashboard.putNumber(Constants.SwerveConstants.moduleNames[moduleNumber] + " Desired Speed", driveSetpoint);
     SmartDashboard.putNumber(Constants.SwerveConstants.moduleNames[moduleNumber] + " Actual Speed", this.getSpeed());
@@ -174,44 +178,56 @@ public class SwerveModule {
     lastAngle = angle.getDegrees() - angle.getDegrees() % 360;
   }
 
+  //Get the swerve module's angle
   private Rotation2d getAngle() {
     return Rotation2d.fromDegrees(this.integratedAngleEncoder.getPosition());
   }
 
+  //Get the speed and angle of the module
   public SwerveModuleState getState() {
     return new SwerveModuleState(this.getSpeed(), this.getAngle());
   }
 
+//Get the speed (RPM)
   public double getSpeed() {
     return this.driveEncoder.getVelocity();
   }
-
+//Get the distance the module travels (in rotations)
   public double getDistance() {
     return this.driveEncoder.getPosition();
   }
 
+  //Get the module's position
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(this.getDistance(), this.getAngle());
   }
 
+  //Get the module's position (when on Red alliance)
   public SwerveModulePosition getRedPosition() {
     return new SwerveModulePosition(this.getDistance(), Rotation2d.fromDegrees(-this.getAngle().getDegrees()));
   }
 
+  
   public CANSparkMax getDriveMotor() {
     return this.driveMotor;
   }
 
   public void periodic() {
+
+    //Sets boundaries for the pid outputs
     var pidOutput = MathUtil.clamp(drivePIDController.calculate(getSpeed(),
         driveSetpoint),
         -Constants.SwerveConstants.maxSpeed,
         Constants.SwerveConstants.maxSpeed);
+
+    //Calculates the feedforward
     var ffOutput = feedforward.calculate(driveSetpoint);
 
+    //Logs the values on Glass
     SmartDashboard.putNumber(Constants.SwerveConstants.moduleNames[moduleNumber] + " PID output", pidOutput);
     SmartDashboard.putNumber(Constants.SwerveConstants.moduleNames[moduleNumber] + " FF output", ffOutput);
 
+    //Set the controller reference value
     driveController.setReference((pidOutput / Constants.SwerveConstants.maxSpeed)
         * 12 + ffOutput,
         ControlType.kVoltage);

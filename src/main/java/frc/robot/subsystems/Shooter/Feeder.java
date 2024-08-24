@@ -117,8 +117,9 @@ public class Feeder extends SubsystemBase {
     checkTunableValues();
     SmartDashboard.putBoolean("Beamy", beamy.get()); //Creates a SmartDashboard value that shopws if the beambreak detects anything
     switch (feedMode) {
-      //Intaking from the HumanPlayer Station; runs the intake until a note is detected
       //(The Cases made below are the "feedModes" referenced throughout the feeder commands)
+      
+      //Intaking from the HumanPlayer Station; runs the intake until a note is detected
       case HP:
         if (!beamy.get()) {
           feeder.set(0);
@@ -130,7 +131,7 @@ public class Feeder extends SubsystemBase {
         }
         break;
 
-      //Runs feeder when an amp shot is triggered
+      //Runs feeder when picking up a note from the ground 
       case INFEED:
         if (!beamy.get()) {
           feeder.set(0);
@@ -142,7 +143,7 @@ public class Feeder extends SubsystemBase {
         }
         break;
 
-      //Runs feeder motors in the case of a shot
+      //Runs feeder motors when a shot is triggered
       case SHOOTFEED:
         if (beamy.get()) {
           feeder.set(0);
@@ -166,6 +167,7 @@ public class Feeder extends SubsystemBase {
         tailSetpoint = 0;
         shouldCommandStop = true;
         break;
+      
       default:
         break;
     }

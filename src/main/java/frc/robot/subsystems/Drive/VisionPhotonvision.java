@@ -1,5 +1,6 @@
 package frc.robot.subsystems.Drive;
 
+//Imports
 import java.util.Optional;
 
 import org.photonvision.EstimatedRobotPose;
@@ -20,6 +21,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import frc.robot.Constants;
 
 public class VisionPhotonvision {
+
   private final PhotonCamera camera;
   private final PhotonPoseEstimator photonPoseEstimator;
   private double lastEstTimestamp = 0;
@@ -35,6 +37,7 @@ public class VisionPhotonvision {
 
   }
 
+  //Gets the latest result 
   public PhotonPipelineResult getLatestResult() {
     return camera.getLatestResult();
   }
@@ -49,7 +52,7 @@ public class VisionPhotonvision {
    *         used for estimation.
    */
 
-  public Optional<EstimatedRobotPose> getEstimatedGlobalPose() {
+   public Optional<EstimatedRobotPose> getEstimatedGlobalPose() {
     var visionEst = photonPoseEstimator.update();
     double latestTimestamp = getLatestResult().getTimestampSeconds();
     boolean newResult = Math.abs(latestTimestamp - lastEstTimestamp) > 1e-5;
@@ -60,6 +63,7 @@ public class VisionPhotonvision {
     return visionEst;
   }
 
+ 
   public Matrix<N3, N1> getEstimationStdDevs(Pose2d estimatedPose) {
     var estStdDevs = Constants.VisionConstants.kSingleTagStdDevs;
     var targets = getLatestResult().getTargets();
@@ -87,6 +91,8 @@ public class VisionPhotonvision {
     return estStdDevs;
   }
 
+  
+  //Resets Pose
   public void resetPose(Pose2d pose) {
     photonPoseEstimator.setLastPose(pose);
   }

@@ -1,5 +1,6 @@
 package frc.robot.subsystems.Drive;
 
+//Imports
 import java.util.List;
 import java.util.Optional;
 
@@ -88,23 +89,35 @@ public class Swerve extends SubsystemBase {
         new SwerveModule(2, Constants.SwerveConstants.Mod2.constants),
         new SwerveModule(3, Constants.SwerveConstants.Mod3.constants)
     };
-
+    
+    //Pose estimator
     poseEstimator = new SwerveDrivePoseEstimator(Constants.SwerveConstants.swerveKinematics, getYaw(), getPositions(),
         new Pose2d());
 
+    //PID values for the drivetrain's 'snapping' function. 
     snapPIDController = new PIDController(
         Constants.SwerveConstants.snapPID[0],
         Constants.SwerveConstants.snapPID[1],
         Constants.SwerveConstants.snapPID[2]);
+
+    //Feedforward
     snapFFModel = new SimpleMotorFeedforward(
         Constants.SwerveConstants.snapSVA[0],
         Constants.SwerveConstants.snapSVA[1],
         Constants.SwerveConstants.snapSVA[2]);
-
+    
+    // Set tolerance for snapPIDController in radians (converted from degrees).
     snapPIDController.setTolerance(Units.degreesToRadians(5));
+    
+
+  // Enable continuous input for snapPIDController between 0 and 2π radians.
+  //Causes the PID contriller to take the shortest path while rotating
     snapPIDController.enableContinuousInput(0, Math.PI * 2);
+    
+    // Set the integrator range for snapPIDController to limit integral windup.
     snapPIDController.setIntegratorRange(-0.1, 0.1);
 
+    // Configure the holonomic path follower for autonomous driving.
     AutoBuilder.configureHolonomic(this::getEstimatedPose, this::setPose, this::getRobotRelativeSpeeds,
         this::driveRobotRelative, new HolonomicPathFollowerConfig(
             Constants.AutoConstants.translationPID, // Translation constants
@@ -112,6 +125,8 @@ public class Swerve extends SubsystemBase {
             Constants.AutoConstants.kMaxSpeedMetersPerSecond,
             Constants.SwerveConstants.wheelBase / 2, // Drive base radius (distance from center to furthest module)
             new ReplanningConfig()),
+
+        //Determines if the alliance is red
         () -> {
           var alliance = DriverStation.getAlliance();
           if (alliance.isPresent()) {
@@ -120,18 +135,22 @@ public class Swerve extends SubsystemBase {
           return false;
         }, this);
 
+    //Set a callback to log the target pose in pathplanner
     PathPlannerLogging.setLogTargetPoseCallback(
         (targetPose) -> {
           debugField2d.getObject("pathplanner target pose").setPose(targetPose);
         });
-
+    
+    // Set a callback to log the active path in PathPlanner.
     PathPlannerLogging.setLogActivePathCallback(this::handleActivePathLogger);
-
+    
+    // Add the vision field to the SmartDashboard for visualization.
     SmartDashboard.putData("Vision field", debugField2d);
 
     Timer.delay(4); // Let the can bus cool down
   }
 
+  // Handle active path logging by storing the last active pose.
   private void handleActivePathLogger(List<Pose2d> poses) {
     if (poses.isEmpty())
       return;
@@ -139,10 +158,13 @@ public class Swerve extends SubsystemBase {
     lastActivePathPose = poses.get(poses.size() - 1);
   }
 
+  // Get the last active path pose.
   private Pose2d getLastActivePathPose() {
     return lastActivePathPose;
   }
 
+
+  // Retrieve the snap target override if in Snap mode.
   public Optional<Rotation2d> getRotationTargetOverride() {
     if (driveMode == DriveMode.Snap) {
       return Optional.of(snapGoal);
@@ -151,15 +173,18 @@ public class Swerve extends SubsystemBase {
     }
   }
 
+  //Set the snap setpoint and velocity
   public void setSnapSetpoint(Rotation2d setpoint, Rotation2d velocity) {
     this.snapSetpoint = setpoint;
     this.snapVelocity = velocity;
   }
 
+  //Set the snap goal
   public void setSnapGoal(Rotation2d goal) {
     this.snapGoal = goal;
   }
 
+  //Checks if the snap is at goal (or within the tolerance range)
   public boolean isSnapAtGoal() {
     double errorBound = (Math.PI * 2) / 2.0;
     var m_positionError = MathUtil.inputModulus(snapGoal.getRadians() - getYawForSnap().getRadians(), -errorBound,
@@ -167,10 +192,12 @@ public class Swerve extends SubsystemBase {
     return Math.abs(m_positionError) < Units.degreesToRadians(5);
   }
 
+  //Checks if snap is at the setpoint
   public boolean isSnapAtSetpoint() {
     return snapPIDController.atSetpoint();
   }
 
+  //Gets the robot's yaw for snap
   public Rotation2d getYawForSnap() {
     double yawRad = getYaw().getRadians();
     yawRad = yawRad % (Math.PI * 2);
@@ -181,6 +208,7 @@ public class Swerve extends SubsystemBase {
     return new Rotation2d(yawRad);
   }
 
+  //Calculate the output for the snap using PID and feedforward control
   public double calculateSnapOutput(Rotation2d setpoint, Rotation2d snapVelocity) {
     double ffOutput = -snapFFModel.calculate(snapVelocity.getRadians());
     double rotation = -snapPIDController.calculate(getYawForSnap().getRadians(), snapSetpoint.getRadians());
@@ -195,30 +223,40 @@ public class Swerve extends SubsystemBase {
    * @param translation
    * @param rotation
    */
+
+  
   public void drive(Translation2d translation, double rotation) {
     switch (driveMode) {
       case Snap:
         rotation = calculateSnapOutput(snapSetpoint, snapVelocity);
         break;
+
       case AutonomousSnap:
         rotation = calculateSnapOutput(snapSetpoint, snapVelocity);
         break;
+
       default:
         break;
     }
+
+    // Calculate the swerve module states for robot movement based on translation and rotation.
     SwerveModuleState[] swerveModuleStates = Constants.SwerveConstants.swerveKinematics.toSwerveModuleStates(
         ChassisSpeeds.fromFieldRelativeSpeeds(translation.getX() * Constants.SwerveConstants.maxSpeed,
             translation.getY() * Constants.SwerveConstants.maxSpeed,
             rotation * Constants.SwerveConstants.maxAngularVelocity, getYaw()));
-
+    
+    //The robot's speed
     robotSpeed = new Translation2d(translation.getX() * Constants.SwerveConstants.maxSpeed,
         translation.getY() * Constants.SwerveConstants.maxSpeed);
-
+    
+    //Setting the max speed to ensure they don't exceed the maximum speed limit
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.SwerveConstants.maxSpeed);
-
+    
+    // Set the desired states for the swerve modules.
     setStates(swerveModuleStates);
   }
-
+  
+  // Drive the robot relative to its own frame of reference.
   public void driveRobotRelative(ChassisSpeeds robotRelativeSpeeds) {
     ChassisSpeeds targetSpeeds = ChassisSpeeds.discretize(robotRelativeSpeeds, 0.02);
     double rotation = targetSpeeds.omegaRadiansPerSecond;
@@ -234,20 +272,24 @@ public class Swerve extends SubsystemBase {
     setStates(targetStates);
   }
 
+  // Set the desired states for the swerve modules.
   public void setStates(SwerveModuleState[] states) {
     for (SwerveModule mod : mSwerveMods) {
       mod.setDesiredState(states[mod.moduleNumber]);
     }
   }
 
+  //Sets drive mode
   public void setDriveMode(DriveMode mode) {
     driveMode = mode;
   }
 
+  //Gets the current drive mode
   public DriveMode getDriveMode() {
     return driveMode;
   }
 
+  //Set the desired states for the swerve modules
   public void setModuleStates(SwerveModuleState[] desiredStates) {
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.SwerveConstants.maxSpeed);
 
@@ -256,6 +298,7 @@ public class Swerve extends SubsystemBase {
     }
   }
 
+  //Resets the Snap PIDController
   public void resetSnapI() {
     snapPIDController.reset();
   }
@@ -280,6 +323,7 @@ public class Swerve extends SubsystemBase {
     return states;
   }
 
+  //Get the position of each swerve module
   public SwerveModulePosition[] getPositions() {
     SwerveModulePosition[] positions = new SwerveModulePosition[4];
 
@@ -290,6 +334,7 @@ public class Swerve extends SubsystemBase {
     return positions;
   }
 
+    //Get the robot's relative speeds from the swerve modules' states
   public ChassisSpeeds getRobotRelativeSpeeds() {
     return Constants.SwerveConstants.swerveKinematics.toChassisSpeeds(getStates());
   }
@@ -312,18 +357,26 @@ public class Swerve extends SubsystemBase {
     return Rotation2d.fromDegrees(gyro.getPitch());
   }
 
+    /**
+   * Get the roll from gyro
+   * 
+   * @return the roll of the robot
+   */
   public Rotation2d getRoll() {
     return Rotation2d.fromDegrees(gyro.getRoll());
   }
 
+  
   public void zeroGyro() {
     gyro.homeYaw();
   }
 
+   //Updates PID and Feedforward values if the number has changed
   public void checkTunableValues() {
     if (!Constants.enableTunableValues)
       return;
 
+    //Updates the anglePID values if the P, I, or D value changes
     if (angleP.hasChanged() || angleI.hasChanged() || angleD.hasChanged()) {
       for (SwerveModule mod : mSwerveMods) {
         mod.angleController.setP(angleP.get());
@@ -331,7 +384,7 @@ public class Swerve extends SubsystemBase {
         mod.angleController.setD(angleD.get());
       }
     }
-
+    //Updates the drivePID values if the P, I, or D value changes
     if (driveP.hasChanged() || driveI.hasChanged() || driveD.hasChanged()) {
       for (SwerveModule mod : mSwerveMods) {
         mod.driveController.setP(driveP.get());
@@ -341,21 +394,25 @@ public class Swerve extends SubsystemBase {
         // mod.drivePIDController.setPID(driveP.get(), driveI.get(), driveD.get());
       }
     }
+
+    //Updates the driveSVA values if the P, I, or D value changes
     if (driveS.hasChanged() || driveV.hasChanged() || driveA.hasChanged()) {
       for (SwerveModule mod : mSwerveMods) {
         mod.feedforward = new SimpleMotorFeedforward(driveS.get(), driveV.get(), driveA.get());
       }
     }
-
+    //Updates the snapPID values if the P, I, or D value changes
     if (snapP.hasChanged() || snapI.hasChanged() || snapD.hasChanged()) {
       snapPIDController.setPID(snapP.get(), snapI.get(), snapD.get());
     }
 
+    //Updates the snapSVA values if the S, V, or A value changes
     if (snapS.hasChanged() || snapV.hasChanged() || snapA.hasChanged()) {
       snapFFModel = new SimpleMotorFeedforward(snapS.get(), snapV.get(), snapA.get());
     }
   }
 
+  //Updats vision measurements
   public void updateVisionMeasurements() {
     var visionEst = vision.getEstimatedGlobalPose();
     visionEst.ifPresent(est -> {
@@ -368,6 +425,7 @@ public class Swerve extends SubsystemBase {
     });
   }
 
+  //Get the Pose from the speaker
   private Optional<Pose3d> getSpeakerPose() {
     var alliance = DriverStation.getAlliance();
     Optional<Pose3d> ampPose = null;
@@ -385,23 +443,27 @@ public class Swerve extends SubsystemBase {
     return ampPose;
   }
 
+  //Get the robot's estimated position
   public Pose2d getEstimatedPose() {
     return poseEstimator.getEstimatedPosition();
   }
 
+  //Resets the Pose and updates it
   public void setPose(Pose2d pose) {
     poseEstimator.resetPosition(getYaw(), getPositions(), pose);
     vision.resetPose(pose);
   }
 
+  //Get distance from speaker during autos
   public double getAutoPoseDistanceFromSpeaker() {
     return lastActivePathPose.getTranslation().getDistance(getSpeakerPose().get().getTranslation().toTranslation2d());
   }
-
+//Get distance from speaker
   public double getDistanceFromSpeaker() {
     return getEstimatedPose().getTranslation().getDistance(getSpeakerPose().get().getTranslation().toTranslation2d());
   }
 
+  //Get the robot's rotation relative to the speaker 
   public Rotation2d getRotationRelativeToSpeaker() {
     var alliance = DriverStation.getAlliance();
 
@@ -424,6 +486,7 @@ public class Swerve extends SubsystemBase {
     }
   }
 
+  //Gets the closest tag
   public Optional<PhotonTrackedTarget> getClosestTag() {
     var targets = vision.getLatestResult().getTargets();
     Optional<PhotonTrackedTarget> result = Optional.empty();
@@ -444,6 +507,7 @@ public class Swerve extends SubsystemBase {
     return result;
   }
 
+  //Values we recorded, can be viewed on Glass
   public void logValues() {
     SmartDashboard.putNumber("Distance From Speaker", getDistanceFromSpeaker());
     SmartDashboard.putNumber("Rotation to Speaker", getRotationRelativeToSpeaker().getDegrees());
@@ -458,12 +522,14 @@ public class Swerve extends SubsystemBase {
 
   }
 
+  //Makes sure motor controllers are configured properly
   public void burnToFlash() {
     for (SwerveModule mod : mSwerveMods) {
       mod.burnToFlash();
     }
   }
 
+  //Get the speed compensation angle
   public Rotation2d getSpeedCompensationAngle() {
     return Rotation2d.fromDegrees(
         (robotSpeed.getY() * Constants.ShooterConstants.onTheFlyMultiplier)
@@ -472,8 +538,15 @@ public class Swerve extends SubsystemBase {
 
   @Override
   public void periodic() {
-    updateVisionMeasurements();
-    checkTunableValues();
+
+    updateVisionMeasurements(); //Updates vision measurements
+    checkTunableValues(); 
+
+
+
+    /*Ensures each swerve module has its values logged  
+    In this case, the desired/actual speeds and angles for each module will be recorded
+    and can be viewed on SmartDashboard or Glass*/
     for (SwerveModule mod : mSwerveMods) {
       mod.logValues();
     }

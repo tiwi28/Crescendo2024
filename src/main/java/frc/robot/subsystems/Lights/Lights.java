@@ -43,6 +43,7 @@ public class Lights extends SubsystemBase {
   private void logValues() {
   }
 
+  //Sets the LED output data
   public void sendBuffer() {
     led.setData(buffer);
   }

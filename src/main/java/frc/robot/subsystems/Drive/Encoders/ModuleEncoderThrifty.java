@@ -24,6 +24,7 @@ public class ModuleEncoderThrifty implements ModuleEncoder {
   }
 
   @Override
+  //Returns the absolute position of the drivetrain wheels
   public Rotation2d getAbsolutePosition() {
     double angle = Math.toRadians(360.0 * getRawAbsolutePosition() - offset.getDegrees());
     if (angle < 0) {
