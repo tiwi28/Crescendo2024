@@ -114,12 +114,13 @@ public class Arm extends SubsystemBase {
   public void setGoal(Rotation2d goal) {
     this.goal = goal;
   }
-
+//Check if arm is at goal
   public boolean atGoal() {
     return Math.abs(getEncoderPosition().getRadians() - goal.getRadians()) < Constants.ArmConstants.tolernace
         .getRadians();
   }
 
+  //Ensures the arm remains within its minimum and maximum angle values
   public void runSetpoint(Rotation2d setpoint) {
     if (setpoint.getRadians() < Constants.ArmConstants.min.getRadians()) {
       this.setpoint = Constants.ArmConstants.min;
@@ -130,32 +131,39 @@ public class Arm extends SubsystemBase {
     }
   }
 
+//Set arm velocity
   public void runVelocity(Rotation2d velocity) {
     this.velocity = velocity;
   }
 
+  //Update the profile's state
   public void runState(TrapezoidProfile.State state) {
     runSetpoint(Rotation2d.fromRadians(state.position));
     runVelocity(Rotation2d.fromRadians(state.velocity));
   }
 
+  //Get the current trapezoi
   public TrapezoidProfile.State getCurrenState() {
     return new TrapezoidProfile.State(encoderPosition.getRadians(), this.velocity.getRadians());
   }
 
+  //Checks if arm is within tolerance
   public boolean atSetpoint() {
     return Math.abs(getEncoderPosition().getRadians() - setpoint.getRadians()) < Constants.ArmConstants.tolernace
         .getRadians();
   }
 
+  //Get setpoint
   public Rotation2d getSetpoint() {
     return setpoint;
   }
 
+  //Get velocity
   public Rotation2d getVelovity() {
     return velocity;
   }
 
+  //Logs values to SmartDashboard/Glass
   private void logValues() {
     SmartDashboard.putNumber("Arm Actual Angle", getEncoderPosition().getDegrees());
     SmartDashboard.putNumber("Arm Desired Angle", setpoint.getDegrees());
@@ -164,15 +172,18 @@ public class Arm extends SubsystemBase {
 
   @Override
   public void periodic() {
-    encoderPosition = encoder.getAbsolutePosition();
-    logValues();
-    checkTunableValues();
 
-    var ffOutput = ffModel.calculate(setpoint.getRadians(), velocity.getRadians());
-    var pidOutput = pid.calculate(getEncoderPosition().getRadians(), setpoint.getRadians());
+    encoderPosition = encoder.getAbsolutePosition();  //Finds the exact position of the encoder
+    logValues();  //Logs values to SmartDashboard/Glass
+    checkTunableValues(); //Updates PID and FF values
 
-    SmartDashboard.putNumber("ffoutput arm", ffOutput);
 
+    var ffOutput = ffModel.calculate(setpoint.getRadians(), velocity.getRadians()); //Calculates Feedforward output
+    var pidOutput = pid.calculate(getEncoderPosition().getRadians(), setpoint.getRadians());  //calculates PID output
+
+    SmartDashboard.putNumber("ffoutput arm", ffOutput); //Displays the FF output calculated above on Smartdahsboard/Glass
+
+    //PID+FF output on the leader and follower motors
     leader.set(ffOutput + pidOutput);
     follower.set(ffOutput + pidOutput);
   }

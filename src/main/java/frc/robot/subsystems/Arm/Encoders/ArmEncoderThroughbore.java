@@ -8,6 +8,7 @@ public class ArmEncoderThroughbore implements ArmEncoder {
   private Rotation2d offset = new Rotation2d();
 
 
+  //Initialize encoder
   public ArmEncoderThroughbore(int id) {
     encoder = new DutyCycleEncoder(id);
   }
