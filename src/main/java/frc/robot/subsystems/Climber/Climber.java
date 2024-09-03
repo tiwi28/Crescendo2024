@@ -252,7 +252,7 @@ public class Climber extends SubsystemBase {
   //Controls the movement of the right climber
   private void handleRight() {
     switch (climberMode) {
-      //
+  
       case HOMING:
         if (rightClimberMotor.getOutputCurrent() >= ClimberConstants.homingCurrentThreshold) {
           if (timer.get() < 1)

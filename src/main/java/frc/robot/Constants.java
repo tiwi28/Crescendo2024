@@ -272,7 +272,7 @@ public final class Constants {
     public static double[] armSGV = new double[] { 0.01, 0.0425, 0.0 }; //Static, Gravity, and Velocity gains 
     public static double[] armPID = new double[] { 2, 1, 0f }; //Arm PID values
 
-    //Arm's polynomial regression
+    //Arm's polynomial regression (useed to predict distances from speaker)
     public static final PolynomialRegression armAngleInterpolationPolynominalRegression = new PolynomialRegression(
         Arrays.asList(
             new Point(1.43, Units.degreesToRadians(47f)),

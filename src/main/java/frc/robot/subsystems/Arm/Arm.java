@@ -110,7 +110,7 @@ public class Arm extends SubsystemBase {
     }
   }
 
-  //Sets 
+  //Sets the arm's goal
   public void setGoal(Rotation2d goal) {
     this.goal = goal;
   }
